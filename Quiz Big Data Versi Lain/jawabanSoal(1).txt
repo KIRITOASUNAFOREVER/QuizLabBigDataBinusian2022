@@ -1,0 +1,163 @@
+.nomor 1
+CREATE DATABASE amore
+
+CREATE EXTERNAL TABLE MsStore( 
+StoreID INT, 
+StoreName VARCHAR(255), 
+StoreAddress VARCHAR(255) 
+) 
+ROW FORMAT DELIMITED 
+FIELDS TERMINATED BY ',' 
+STORED AS TEXTFILE 
+TBLPROPERTIES("skip.header.line.count"="1") 
+
+CREATE EXTERNAL TABLE MsDrugType( 
+DrugTypeID INT, 
+DrugTypeName VARCHAR(255), 
+) 
+ROW FORMAT DELIMITED 
+FIELDS TERMINATED BY ',' 
+STORED AS TEXTFILE 
+TBLPROPERTIES("skip.header.line.count"="1") 
+
+-> check directory desktop
+ls Desktop
+
+-> check is data di desktop
+ls Desktop/[nama file]
+
+-> open terminal
+hadoop fs -copyFromLocal Desktop/[nama file]
+
+-> check apakah [nama file] sudah di hadoop
+hadoop fs -ls
+
+->check isi [nama file] di hadoop
+hadoop fs -ls [nama file]
+
+//[file name] di ibaratkan data
+-> balik ke hue
+LOAD DATA INPATH '/user/cloudera/data/MsDrugType.csv' INTO TABLE msdrugtype ctrl + enter//harus sesuai nama tablenya 
+LOAD DATA INPATH '/user/cloudera/data/MsStore.csv' INTO TABLE msstore ctrl + enter//harus sesuai nama tablenya
+
+-> terminal buat kasis akses write ( RWE = 777) // chmon buat ubah permision 7 user 7 group 7 other.
+hadoop fs -chmod 777 /user/cloudera/data     -> kalau error sampai /user/cloudera aja
+hadoop fs -ls /user/cloudera/data   		-> pastiin yang /user/cloudera/data 
+						paling kirinya drwxrwxrwx
+
+-> balik ke hue
+LOAD DATA INPATH '/user/cloudera/data/MsDrugType.csv' INTO TABLE msdrugtype ctrl + enter //harus sesuai nama tablenya 
+LOAD DATA INPATH '/user/cloudera/data/MsStore.csv' INTO TABLE msstore ctrl + enter //harus sesuai nama tablenya
+
+-> pindah ke hue
+select * from msstore ctrl + enter // ntr keluar datanya
+select * from msdrugstore ctrl + enter // ntr keluar datanya
+
+Nomor 2.
+-> terminal
+mysql -u root -p    			 -> LOGIN KE MYSQL
+enter password: clodera //enter
+
+-> mysql>
+show databases;
+
+create database amore;
+
+use amore;
+
+source Deskto/data/create+insert.sql; 	-> buat mskin data sql ke database 
+// tungguin smpe semua data selesai di load
+
+show tables;  -> tampilin tablenya
+
+exit; // keluar dari mysql
+
+clear // buat ngapus terminal nya biar enak
+
+-> terminal
+sudo sqoop import-all-tables --connect jdbc:mysql://quickstart:3306/amore --username=root -P --hive-import --hive-database=amore
+
+password: cloudera
+
+//tunggu sampe kelar
+
+refresh tables di hue bagian kiri pilih yang invalidate all metadata and rebuild index
+
+kalau error kayak taba harus bilang ke aslabnya
+
+//nomor 3
+dibawah ini adalah jawaban 1-5 query sql
+
+a.
+SELECT d.drugname, sum(dt.quantity)
+FROM msdrug d
+JOIN detailtransaction dt 
+ON d.drugid = dt.drugid
+JOIN headertransaction ht
+ON dt.transactionid = ht.transactionid
+WHERE YEAR(ht.transactiondate) = 2017
+GROUP BY d.drugname, MONTH(ht.transactiondate)
+HAVING SUM(dt.quantity) > 50
+
+b.
+SELECT a.storename,count(b.transactionid) as JumlahTransaksi
+FROM msstore a
+JOIN headertransaction b 
+ON b.storeid=a.storeid
+AND year(b.transactiondate)=2018
+GROUP BY a.storename
+ORDER BY JumlahTransaksi DESC
+LIMIT 10
+
+c.
+SELECT a.customername,sum(c.quantity*d.drugprice) as TotalSpent
+FROM mscustomer a 
+JOIN headertransaction b 
+ON b.customerid=a.customerid
+AND year(b.transactiondate)=2018
+JOIN detailtransaction c
+ON c.transactionid=b.transactionid
+JOIN msdrug d 
+ON d.drugid=c.drugid
+GROUP BY a.customername
+ORDER BY TotalSpent DESC
+LIMIT 3
+
+d.
+SELECT a.drugtypename, SUM(c.quantity) as TotalSum
+FROM  msdrugtype a 
+JOIN msdrug b ON a.drugtypeid=b.drugtypeid
+JOIN detailtransaction c ON c.drugid=b.drugid
+JOIN 
+(SELECT a.drugtypeid, SUM(c.quantity) as TotalSum
+FROM msdrugtype a 
+JOIN msdrug b ON a.drugtypeid=b.drugtypeid
+JOIN detailtransaction c ON c.drugid=b.drugid
+GROUP BY a.drugtypeid) d 
+ON d.drugtypeid=a.drugtypeid
+GROUP BY a.drugtypename
+HAVING TotalSum>avg(d.TotalSum)
+
+e.
+SELECT a.customername,sum(c.quantity) as TotalBought,
+(
+CASE
+WHEN sum(c.quantity)>200 THEN 1000000
+WHEN sum(c.quantity)>100 THEN 500000
+WHEN sum(c.quantity)>30 THEN 200000
+WHEN sum(c.quantity)>20 THEN 100000
+ELSE 0
+END
+) AS Voucher
+FROM mscustomer a 
+JOIN headertransaction b 
+ON b.customerid=a.customerid
+AND (year(b.transactiondate)>2016 AND year(b.transactiondate)<2020)
+JOIN detailtransaction c
+ON c.transactionid=b.transactionid
+JOIN msdrug d 
+ON d.drugid=c.drugid
+JOIN msdrugtype e 
+ON e.drugtypeid=d.drugtypeid
+GROUP BY a.customername
+HAVING count(e.drugtypeid)>5

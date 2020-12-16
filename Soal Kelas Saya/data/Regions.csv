@@ -1,0 +1,111 @@
+RegionId,RegionName,Country
+1,Alabama,America
+2,Alaska,America
+3,Arizona,America
+4,Arkansas,America
+5,California,America
+6,Colorado,America
+7,Connecticut,America
+8,Delaware,America
+9,Florida,America
+10,Georgia,America
+11,Hawaii,America
+12,Idaho,America
+13,Illinois,America
+14,Indiana,America
+15,Iowa,America
+16,Kansas,America
+17,Kentucky,America
+18,Louisiana,America
+19,Maine,America
+20,Maryland,America
+21,Massachusetts,America
+22,Michigan,America
+23,Minnesota,America
+24,Mississippi,America
+25,Missouri,America
+26,Montana,America
+27,Nebraska,America
+28,Nevada,America
+29,New Hampshire,America
+30,New Jersey,America
+31,New Mexico,America
+32,New York,America
+33,North Carolina,America
+34,North Dakota,America
+35,Ohio,America
+36,Oklahoma,America
+37,Oregon,America
+38,Pennsylvania,America
+39,Rhode Island,America
+40,South Carolina,America
+41,South Dakota,America
+42,Tennessee,America
+43,Texas,America
+44,Utah,America
+45,Vermont,America
+46,Virginia,America
+47,Washington,America
+48,West Virginia,America
+49,Wisconsin,America
+50,Wyoming,America
+51,Alberta,Canada
+52,British Columbia,Canada
+53,Manitoba,Canada
+54,New Brunswick,Canada
+55,Newfoundland,Canada
+56,Northwest Territories,Canada
+57,Nova Scotia,Canada
+58,Nunavut,Canada
+59,Ontario,Canada
+60,Prince Edward Island,Canada
+61,Quebec,Canada
+62,Saskatchewan,Canada
+63,Yukon,Canada
+64,Aichi,Japan
+65,Akita,Japan
+66,Aomori,Japan
+67,Chiba,Japan
+68,Ehime,Japan
+69,Fukui,Japan
+70,Fukuoka,Japan
+71,Fukushima,Japan
+72,Gifu,Japan
+73,Gunma,Japan
+74,Hiroshima,Japan
+75,Hokkaido,Japan
+76,Hyougo,Japan
+77,Ibaraki,Japan
+78,Ishikawa,Japan
+79,Iwate,Japan
+80,Kagawa,Japan
+81,Kagoshima,Japan
+82,Kanagawa,Japan
+83,Kochi,Japan
+84,Kumamoto,Japan
+85,Kyoto,Japan
+86,Mie,Japan
+87,Miyagi,Japan
+88,Miyazaki,Japan
+89,Nagano,Japan
+90,Nagasaki,Japan
+91,Nara,Japan
+92,Niigata,Japan
+93,Oita,Japan
+94,Okayama,Japan
+95,Okinawa,Japan
+96,Osaka,Japan
+97,Saga,Japan
+98,Saitama,Japan
+99,Shiga,Japan
+100,Shimane,Japan
+101,Shizuoka,Japan
+102,Tochigi,Japan
+103,Tokushima,Japan
+104,Tokyo,Japan
+105,Tottori,Japan
+106,Toyama,Japan
+107,Wakayama,Japan
+108,Yamagata,Japan
+109,Yamaguchi,Japan
+110,Yamanashi,Japan

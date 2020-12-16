@@ -1,0 +1,219 @@
+Nama	:  Evan Edbert
+NIM	:  2201750105
+Date	:  20-10-2020
+Kelas	:  BA08
+Quiz Big Data Processing
+
+No.1 CSV Data Integration into Hive
+
+# roman sebagai nama database yang dibuat
+CREATE DATABASE roman
+
+# create table Novel dan Writer
+# Novel
+# Di hive, ada error unsupported type: Date jadi PublishDate ganti jadi Varchar
+# karena di csv-nya, dipisah dengan ";" maka di bagian "fields terminated by" jadi ";"
+CREATE EXTERNAL TABLE Novel(
+     NovelId int,
+     NovelName VARCHAR(100),
+     WriterId int,
+     PublishDate VARCHAR(100),
+     Price int
+)
+row format delimited
+fields terminated by ';'
+stored as textfile
+tblproperties("Skip.Header.Line.Count"="1") 
+
+# Writer
+CREATE EXTERNAL TABLE Writer(
+    WriterId int,
+    WriterName varchar(100)
+)
+row format delimited
+fields terminated by ','
+stored as textfile
+tblproperties("Skip.Header.Line.Count"="1")
+
+# masukin csv ke dalam hive dengan hadoop fs
+# cek list apa aja yang ada di cloudera
+(base) [cloudera@quickstart ~]$ ls
+cloudera-manager  eclipse                     Music      Untitled Folder
+cm_api.py         enterprise-deployment.json  parcels    Videos
+Desktop           express-deployment.json     Pictures   workspace
+Documents         kerberos                    Public
+Downloads         lib                         Templates
+
+# cek list yang ada di Desktop
+(base) [cloudera@quickstart ~]$ ls Desktop
+data             Enterprise.desktop  Kerberos.desktop  share
+Eclipse.desktop  Express.desktop     Parcels.desktop
+
+# cek list yang ada di dalam folder data Desktop
+(base) [cloudera@quickstart ~]$ ls Desktop/data
+create+insert.sql  Novel.csv  Writer.csv
+
+# mengcopy folder data ke dalam hive 
+(base) [cloudera@quickstart ~]$ hadoop fs -copyFromLocal Desktop/data
+
+# folder data sudah dalam list hive
+(base) [cloudera@quickstart ~]$ hadoop fs -ls
+Found 2 items
+drwxr-xr-x   - cloudera cloudera          0 2020-10-20 01:43 data
+drwxr-xr-x   - cloudera cloudera          0 2020-02-07 20:15 tmp
+
+# mengubah permission file user-group-other menjadi read-write-execute untuk folder data 
+(base) [cloudera@quickstart ~]$ hadoop fs -chmod 777 /user/cloudera/data
+(base) [cloudera@quickstart ~]$ hadoop fs -ls
+Found 2 items
+drwxrwxrwx   - cloudera cloudera          0 2020-10-20 01:43 data
+drwxr-xr-x   - cloudera cloudera          0 2020-02-07 20:15 tmp
+
+# setelah csv sudah dalam hive dan diganti permission-nya, di load ke dalam tabel Novel & Writer 
+load data inpath '/user/cloudera/data/Novel.csv' into table novel
+load data inpath '/user/cloudera/data/Writer.csv' into table writer
+
+No.2 create+insert.SQL integration into Hive
+
+# masuk ke dalam sql database di Terminal, password nya cloudera
+mysql -u root -p
+
+# view database yang ada dulu
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| cm                 |
+| firehose           |
+| hue                |
+| metastore          |
+| mysql              |
+| nav                |
+| navms              |
+| oozie              |
+| retail_db          |
+| rman               |
+| sentry             |
++--------------------+
+12 rows in set (0.01 sec)
+
+# buat database di sql yaitu database roman
+mysql> create database roman;
+Query OK, 1 row affected (0.00 sec)
+
+# kita pakai database roman
+mysql> use roman;
+Database changed
+
+# kita masukin isi database roman dari folder data di Desktop yaitu create+insert.sql
+mysql> source Desktop/data/create+insert.sql;
+Query OK, 1 row affected (0.00 sec)
+
+Query OK, 1 row affected (0.00 sec)
+
+Query OK, 1 row affected (0.00 sec)
+
+# setelah sudah selesai loading, cek table dalam database roman
+mysql> show tables;
++-------------------+
+| Tables_in_roman   |
++-------------------+
+| Customer          |
+| DetailTransaction |
+| HeaderTransaction |
+| Staff             |
++-------------------+
+4 rows in set (0.00 sec)
+
+# setelah itu, kita keluar dari mysql, masuk ke command awal cloudera
+mysql> exit;
+Bye
+(base) [cloudera@quickstart ~]$ 
+
+# kemudian kita bersihkan dulu dengan clear
+(base) [cloudera@quickstart ~]$ clear
+
+# kemudian kita mulai mysql integration ke dalam hive nya, pass cloudera
+(base) [cloudera@quickstart ~]$ sudo sqoop import-all-tables --connect jdbc:mysql://quickstart:3306/roman --username=root -P --hive-import --hive-database=roman
+--------------------------------------------------
+Logging initialized using configuration in jar:file:/usr/lib/hive/lib/hive-common-1.1.0-cdh5.13.0.jar!/hive-log4j.properties
+OK
+Time taken: 0.076 seconds
+Loading data to table roman.headertransaction
+Table roman.headertransaction stats: [numFiles=4, totalSize=236746]
+OK
+Time taken: 0.432 seconds
+Note: /tmp/sqoop-root/compile/1f7a4f0c4c32f6c2044af07acf8ed27d/Staff.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+# setelah loading, jika sudah ok, kembali ke hive, refresh table, pilih Invalidate all metadata and rebuild index
+
+No.3 Database Query
+
+a) Show the number of books sold for five oldest novels written by Raymund Shmyr.
+
+SELECT n.novelname, n.publishdate, sum(dt.quantity) as TotalSales FROM writer wr
+JOIN novel n on wr.writerid = n.writerid
+join detailtransaction dt on n.novelid = dt.novelid
+where wr.writername = "Raymund Shmyr" 
+GROUP BY n.novelname, n.publishdate
+ORDER BY TotalSales desc
+limit 5
+
+b) Show top 3 writers who wrote the most books and was published 5 years ago.
+
+SELECT wr.writername, count(n.novelid) as TotalBooks FROM writer wr
+JOIN novel n on wr.writerid = n.writerid
+where n.publishdate like "2015%
+GROUP BY wr.writername
+ORDER BY TotalBooks 
+limit 3
+
+c) Show top 3 female customers that do the most transaction.
+
+select c.customername, count(ht.transactionid) as TotalTransaction from customer c
+join headertransaction ht on c.customerid = ht.customerid 
+where c.customergender = "female"
+group by c.customername
+order by TotalTransaction
+limit 3
+
+d) Show male staff who have sold books more than the average.
+
+select s.staffname, sum(dt.quantity) as TotalSales from staff s
+join headertransaction ht on s.staffid = ht.staffid
+join detailtransaction dt on ht.transactionid = dt.transactionid
+join ( select s.staffid, sum(dt.quantity) as TotalSales from staff s
+join headertransaction ht on s.staffid = ht.staffid
+join detailtransaction dt on ht.transactionid = dt.transactionid 
+group by s.staffid) sub on s.staffid = sub.staffid
+where s.staffgender = "male"
+group by s.staffname
+having TotalSales > avg(sub.TotalSales)
+
+
+e) Show novel and its total price after discount per transaction for novel that is published after 1999 and the novel name must contain at least 3 words. 
+   The discount per novel will be based from its total price with the following condition: 
+   Total Price Per Novel	                Discount Per Novel
+    More than 10000000	                              80%
+More than 1000000 and below or equals 10000000	      70%
+More than 500000 and below or equals 1000000	      50%
+           Others	                              20%
+ 
+select n.novelname, sum(n.price * (select(
+    CASE
+    WHEN n.price>10000000 THEN 80/100
+    WHEN n.price>1000000 and n.price<= 10000000 THEN 70/100
+    WHEN n.price>500000 and n.price<= 1000000 THEN 50/100
+    ELSE 20/100
+    END
+    ) AS discount from ) 
+) 
+from novel n join detailtransaction dt on n.novelid = dt.novelid
+where n.novelname like "% % %" and n.publishdate not like "1999%" 
+and n.publishdate not like "1998%" and n.publishdate not like "1997%"
+and n.publishdate not like "1999%" 
+group by n.novelname
+
+
